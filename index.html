@@ -10,7 +10,7 @@
         import { getFirestore, doc, setDoc, updateDoc, getDoc, increment } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
         const firebaseConfig = {
-    apiKey: "AIzaSyA2i7FjBR7ic2pKELfkZ4JlIEWjv60_NlM",
+  apiKey: "AIzaSyA2i7FjBR7ic2pKELfkZ4JlIEWjv60_NlM",
   authDomain: "try-ok-def2b.firebaseapp.com",
   projectId: "try-ok-def2b",
   storageBucket: "try-ok-def2b.firebasestorage.app",
@@ -21,6 +21,27 @@
         const app = initializeApp(firebaseConfig);
         const auth = getAuth();
         const db = getFirestore();
+
+        // Show Sign Up/Sign In Form
+        function showSignInForm() {
+            document.getElementById('signUpForm').style.display = 'block';
+            document.getElementById('depositForm').style.display = 'none';
+            document.getElementById('dashboard').style.display = 'none';
+        }
+
+        // Show Deposit Form
+        function showDepositForm() {
+            document.getElementById('signUpForm').style.display = 'none';
+            document.getElementById('depositForm').style.display = 'block';
+            document.getElementById('dashboard').style.display = 'none';
+        }
+
+        // Show Main Dashboard
+        function showDashboard() {
+            document.getElementById('signUpForm').style.display = 'none';
+            document.getElementById('depositForm').style.display = 'none';
+            document.getElementById('dashboard').style.display = 'block';
+        }
 
         // Function to create a new user
         document.getElementById("signup").addEventListener("click", async () => {
@@ -39,6 +60,7 @@
                 });
 
                 alert("Signup Successful! Please deposit to activate your account.");
+                showDepositForm(); // Show deposit form after signup
             } catch (error) {
                 alert(error.message);
             }
@@ -51,6 +73,7 @@
             try {
                 await signInWithEmailAndPassword(auth, email, password);
                 alert("Login Successful!");
+                showDepositForm(); // Show deposit form after login
             } catch (error) {
                 alert(error.message);
             }
@@ -61,6 +84,7 @@
             try {
                 await signOut(auth);
                 alert("Logged Out!");
+                showSignInForm(); // Show login form after logout
             } catch (error) {
                 alert(error.message);
             }
@@ -79,6 +103,7 @@
                 balance: depositAmount  // Set balance to deposit amount
             });
             alert("Deposit Approved!");
+            showDashboard(); // Show dashboard after deposit is approved
         }
 
         // Function to handle referral bonus
@@ -126,20 +151,35 @@
                 }
             }
         }
+
+        // Show the SignUp form by default when page loads
+        window.onload = showSignInForm;
     </script>
 </head>
 <body>
     <h2>Firebase Authentication with Full Flow</h2>
-    <input type="email" id="email" placeholder="Enter Email">
-    <input type="password" id="password" placeholder="Enter Password">
-    <button id="signup">Sign Up</button>
-    <button id="login">Login</button>
-    <button id="logout">Logout</button>
 
-    <!-- Optionally, add deposit, referral, and withdrawal UI -->
-    <button onclick="approveDeposit('userId', 100)">Approve Deposit</button>
-    <button onclick="handleReferralBonus('referrerId', 100)">Apply Referral Bonus</button>
-    <button onclick="calculateDailyProfit('userId')">Calculate Daily Profit</button>
-    <button onclick="handleWithdrawal('userId', 27)">Withdraw Money</button>
+    <!-- SignUp / Login Form -->
+    <div id="signUpForm">
+        <input type="email" id="email" placeholder="Enter Email">
+        <input type="password" id="password" placeholder="Enter Password">
+        <button id="signup">Sign Up</button>
+        <button id="login">Login</button>
+    </div>
+
+    <!-- Deposit Form (After Sign Up or Login) -->
+    <div id="depositForm" style="display:none;">
+        <h3>Please deposit to activate your account</h3>
+        <button onclick="approveDeposit('userId', 100)">Approve Deposit</button>
+    </div>
+
+    <!-- Main Dashboard (After Deposit Approval) -->
+    <div id="dashboard" style="display:none;">
+        <h3>Welcome to Your Dashboard</h3>
+        <p>Balance: <span id="balance">0</span> PKR</p>
+        <button onclick="handleWithdrawal('userId', 27)">Withdraw Money</button>
+        <button onclick="calculateDailyProfit('userId')">Calculate Daily Profit</button>
+        <button id="logout">Logout</button>
+    </div>
 </body>
 </html>
