@@ -95,15 +95,33 @@
             return Math.random().toString(36).substring(2, 10);  // Random referral code
         }
 
-        // Function to approve deposit and update user balance
+        // Function to handle deposit and update status
+        async function handleDeposit(userId, depositAmount) {
+            const userRef = doc(db, "users", userId);
+            const userSnapshot = await getDoc(userRef);
+
+            if (userSnapshot.exists()) {
+                const userData = userSnapshot.data();
+
+                // Approve deposit and set the balance
+                await updateDoc(userRef, {
+                    depositStatus: "approved",
+                    balance: depositAmount // Set balance to deposit amount
+                });
+                alert("Deposit Confirmed! Your account is now active.");
+                showDashboard(); // Show dashboard after deposit confirmation
+            }
+        }
+
+        // Function to approve deposit and update user balance (Admin's action)
         async function approveDeposit(userId, depositAmount) {
             const userRef = doc(db, "users", userId);
             await updateDoc(userRef, {
                 depositStatus: "approved",
                 balance: depositAmount  // Set balance to deposit amount
             });
-            alert("Deposit Approved!");
-            showDashboard(); // Show dashboard after deposit is approved
+            alert("Deposit Approved! Balance updated.");
+            showDashboard(); // Show dashboard after approval
         }
 
         // Function to handle referral bonus
@@ -177,9 +195,4 @@
     <div id="dashboard" style="display:none;">
         <h3>Welcome to Your Dashboard</h3>
         <p>Balance: <span id="balance">0</span> PKR</p>
-        <button onclick="handleWithdrawal('userId', 27)">Withdraw Money</button>
-        <button onclick="calculateDailyProfit('userId')">Calculate Daily Profit</button>
-        <button id="logout">Logout</button>
-    </div>
-</body>
-</html>
+        <
