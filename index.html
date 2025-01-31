@@ -5,47 +5,54 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Firebase Auth</title>
     <script type="module">
+        // Importing Firebase SDK modules
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getAuth, signInWithPopup, GoogleAuthProvider, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
+        // Firebase configuration
         const firebaseConfig = {
-            apiKey: "AIzaSyA2i7Fj...",  // اپنی API key لگائیں
-            authDomain: "your-project.firebaseapp.com",
-            projectId: "your-project",
-            storageBucket: "your-project.appspot.com",
-            messagingSenderId: "your-messagingSenderId",
-            appId: "your-appId"
+            apiKey: "AIzaSyA2i7FjBR7ic2pKELfkZ4JlIEWjv60_NlM",  // اپنی API key لگائیں
+            authDomain: "try-ok-def2b.firebaseapp.com",
+            projectId: "try-ok-def2b",
+            storageBucket: "try-ok-def2b.firebasestorage.app",
+            messagingSenderId: "970681789803",
+            appId: "1:970681789803:web:0ee725fa11eac40716702e"
         };
 
+        // Initialize Firebase app
         const app = initializeApp(firebaseConfig);
-        const auth = getAuth();
+        const auth = getAuth(app);  // Make sure to pass `app` in getAuth()
         const provider = new GoogleAuthProvider();
 
+        // Google login handler
         document.getElementById("googleLogin").addEventListener("click", () => {
             signInWithPopup(auth, provider)
                 .then((result) => alert("Google Login Successful!"))
-                .catch((error) => alert(error.message));
+                .catch((error) => alert("Google Login Error: " + error.message));
         });
 
+        // Sign Up handler
         document.getElementById("signup").addEventListener("click", () => {
             const email = document.getElementById("email").value;
             const password = document.getElementById("password").value;
             createUserWithEmailAndPassword(auth, email, password)
                 .then((userCredential) => alert("Signup Successful!"))
-                .catch((error) => alert(error.message));
+                .catch((error) => alert("Signup Error: " + error.message));
         });
 
+        // Login handler
         document.getElementById("login").addEventListener("click", () => {
             const email = document.getElementById("email").value;
             const password = document.getElementById("password").value;
             signInWithEmailAndPassword(auth, email, password)
                 .then((userCredential) => alert("Login Successful!"))
-                .catch((error) => alert(error.message));
+                .catch((error) => alert("Login Error: " + error.message));
         });
 
+        // Logout handler
         document.getElementById("logout").addEventListener("click", () => {
             signOut(auth).then(() => alert("Logged Out!"))
-                .catch((error) => alert(error.message));
+                .catch((error) => alert("Logout Error: " + error.message));
         });
     </script>
 </head>
