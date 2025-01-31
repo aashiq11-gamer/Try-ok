@@ -3,66 +3,143 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Firebase Auth</title>
+    <title>Firebase Auth with Complete Flow</title>
     <script type="module">
-        // Importing Firebase SDK modules
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getAuth, signInWithPopup, GoogleAuthProvider, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+        import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+        import { getFirestore, doc, setDoc, updateDoc, getDoc, increment } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-        // Firebase configuration
         const firebaseConfig = {
-            apiKey: "AIzaSyA2i7FjBR7ic2pKELfkZ4JlIEWjv60_NlM",  // اپنی API key لگائیں
-            authDomain: "try-ok-def2b.firebaseapp.com",
-            projectId: "try-ok-def2b",
-            storageBucket: "try-ok-def2b.firebasestorage.app",
-            messagingSenderId: "970681789803",
-            appId: "1:970681789803:web:0ee725fa11eac40716702e"
+            apiKey: "AIzaSyA2i7Fj...", // Use your own Firebase API key here
+            authDomain: "your-project.firebaseapp.com",
+            projectId: "your-project",
+            storageBucket: "your-project.appspot.com",
+            messagingSenderId: "your-messagingSenderId",
+            appId: "your-appId"
         };
 
-        // Initialize Firebase app
         const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);  // Make sure to pass `app` in getAuth()
-        const provider = new GoogleAuthProvider();
+        const auth = getAuth();
+        const db = getFirestore();
 
-        // Google login handler
-        document.getElementById("googleLogin").addEventListener("click", () => {
-            signInWithPopup(auth, provider)
-                .then((result) => alert("Google Login Successful!"))
-                .catch((error) => alert("Google Login Error: " + error.message));
-        });
-
-        // Sign Up handler
-        document.getElementById("signup").addEventListener("click", () => {
+        // Function to create a new user
+        document.getElementById("signup").addEventListener("click", async () => {
             const email = document.getElementById("email").value;
             const password = document.getElementById("password").value;
-            createUserWithEmailAndPassword(auth, email, password)
-                .then((userCredential) => alert("Signup Successful!"))
-                .catch((error) => alert("Signup Error: " + error.message));
+            try {
+                const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+                const userId = userCredential.user.uid;
+
+                // Save user details in Firestore with pending deposit status
+                await setDoc(doc(db, "users", userId), {
+                    depositStatus: "pending",  // Initial status
+                    balance: 0,
+                    referralCode: generateReferralCode(),  // Optional: Generate referral code
+                    createdAt: new Date()
+                });
+
+                alert("Signup Successful! Please deposit to activate your account.");
+            } catch (error) {
+                alert(error.message);
+            }
         });
 
-        // Login handler
-        document.getElementById("login").addEventListener("click", () => {
+        // Function to log in a user
+        document.getElementById("login").addEventListener("click", async () => {
             const email = document.getElementById("email").value;
             const password = document.getElementById("password").value;
-            signInWithEmailAndPassword(auth, email, password)
-                .then((userCredential) => alert("Login Successful!"))
-                .catch((error) => alert("Login Error: " + error.message));
+            try {
+                await signInWithEmailAndPassword(auth, email, password);
+                alert("Login Successful!");
+            } catch (error) {
+                alert(error.message);
+            }
         });
 
-        // Logout handler
-        document.getElementById("logout").addEventListener("click", () => {
-            signOut(auth).then(() => alert("Logged Out!"))
-                .catch((error) => alert("Logout Error: " + error.message));
+        // Function to log out a user
+        document.getElementById("logout").addEventListener("click", async () => {
+            try {
+                await signOut(auth);
+                alert("Logged Out!");
+            } catch (error) {
+                alert(error.message);
+            }
         });
+
+        // Function to generate referral code (optional)
+        function generateReferralCode() {
+            return Math.random().toString(36).substring(2, 10);  // Random referral code
+        }
+
+        // Function to approve deposit and update user balance
+        async function approveDeposit(userId, depositAmount) {
+            const userRef = doc(db, "users", userId);
+            await updateDoc(userRef, {
+                depositStatus: "approved",
+                balance: depositAmount  // Set balance to deposit amount
+            });
+            alert("Deposit Approved!");
+        }
+
+        // Function to handle referral bonus
+        async function handleReferralBonus(referrerId, depositAmount) {
+            const bonus = depositAmount * 0.07;  // 7% referral bonus
+            const referrerRef = doc(db, "users", referrerId);
+            await updateDoc(referrerRef, {
+                balance: increment(bonus)  // Add bonus to referrer balance
+            });
+            alert("Referral Bonus Applied!");
+        }
+
+        // Function to calculate daily profit (every 24 hours)
+        async function calculateDailyProfit(userId) {
+            const userRef = doc(db, "users", userId);
+            const userSnapshot = await getDoc(userRef);
+
+            if (userSnapshot.exists()) {
+                const userData = userSnapshot.data();
+                const profit = userData.balance * 0.07;  // 7% daily profit
+                await updateDoc(userRef, {
+                    balance: userData.balance + profit
+                });
+                alert("Daily Profit Added!");
+            }
+        }
+
+        // Function to withdraw money (with 1 PKR tax deduction)
+        async function handleWithdrawal(userId, withdrawAmount) {
+            const userRef = doc(db, "users", userId);
+            const userSnapshot = await getDoc(userRef);
+
+            if (userSnapshot.exists()) {
+                const userData = userSnapshot.data();
+                const tax = 1;  // 1 PKR tax
+                const finalAmount = withdrawAmount - tax;
+
+                if (userData.balance >= withdrawAmount) {
+                    await updateDoc(userRef, {
+                        balance: userData.balance - withdrawAmount
+                    });
+                    alert("Withdrawal Successful! 1 PKR Tax Deducted.");
+                } else {
+                    alert("Insufficient balance!");
+                }
+            }
+        }
     </script>
 </head>
 <body>
-    <h2>Firebase Authentication</h2>
+    <h2>Firebase Authentication with Full Flow</h2>
     <input type="email" id="email" placeholder="Enter Email">
     <input type="password" id="password" placeholder="Enter Password">
     <button id="signup">Sign Up</button>
     <button id="login">Login</button>
-    <button id="googleLogin">Login with Google</button>
     <button id="logout">Logout</button>
+
+    <!-- Optionally, add deposit, referral, and withdrawal UI -->
+    <button onclick="approveDeposit('userId', 100)">Approve Deposit</button>
+    <button onclick="handleReferralBonus('referrerId', 100)">Apply Referral Bonus</button>
+    <button onclick="calculateDailyProfit('userId')">Calculate Daily Profit</button>
+    <button onclick="handleWithdrawal('userId', 27)">Withdraw Money</button>
 </body>
 </html>
