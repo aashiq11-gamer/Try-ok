@@ -4,186 +4,87 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>H11 Earns</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 0;
-            padding: 0;
-        }
-
-        header {
-            background-color: #333;
-            padding: 1rem;
-        }
-
-        header nav a {
-            color: white;
-            text-decoration: none;
-            margin: 0 15px;
-        }
-
-        main {
-            padding: 20px;
-        }
-
-        h1 {
-            font-size: 2em;
-        }
-
-        input, button {
-            padding: 10px;
-            margin: 10px 0;
-            width: 100%;
-        }
-
-        .hidden {
-            display: none;
-        }
-    </style>
-</head>
-<body>
-    <header>
-        <nav>
-            <a href="javascript:void(0);" onclick="showPage('home')">Home</a>
-            <a href="javascript:void(0);" onclick="showPage('login')">Login</a>
-            <a href="javascript:void(0);" onclick="showPage('signup')">Sign Up</a>
-            <a href="javascript:void(0);" onclick="showPage('dashboard')">Dashboard</a>
-            <a href="javascript:void(0);" onclick="showPage('profile')">Profile</a>
-        </nav>
-    </header>
-
-    <main>
-        <!-- Home Page -->
-        <div id="home" class="page">
-            <h1>welcome to My Earning Hubs</h1>
-            <p>Earn by increasing Profit!</p>
-        </div>
-
-        <!-- Sign Up Page -->
-        <div id="signup" class="page hidden">
-            <h1>Create an Account</h1>
-            <form id="signup-form">
-                <input type="email" id="signup-email" placeholder="Enter your email" required>
-                <input type="password" id="signup-password" placeholder="Enter password" required>
-                <button type="submit">Sign Up</button>
-            </form>
-        </div>
-
-        <!-- Login Page -->
-        <div id="login" class="page hidden">
-            <h1>Login to Your Account</h1>
-            <form id="login-form">
-                <input type="email" id="login-email" placeholder="Enter your email" required>
-                <input type="password" id="login-password" placeholder="Enter password" required>
-                <button type="submit">Login</button>
-            </form>
-        </div>
-
-        <!-- Dashboard Page -->
-        <div id="dashboard" class="page hidden">
-            <h1>Dashboard</h1>
-            <p>Welcome, <span id="user-name"></span>!</p>
-            <p>Your earnings today: <span id="earnings">0</span> PKR</p>
-        </div>
-
-        <!-- Profile Page -->
-        <div id="profile" class="page hidden">
-            <h1>Your Profile</h1>
-            <form id="update-profile-form">
-                <input type="text" id="profile-name" placeholder="Enter your name" required>
-                <input type="email" id="profile-email" placeholder="Enter your email" required>
-                <button type="submit">Update Profile</button>
-            </form>
-        </div>
-    </main>
-
-    <!-- Firebase Configuration -->
-    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-auth.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-firestore.js"></script>
-
-    <script>
-        // Firebase Configuration
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.2.0/firebase-app.js";
+        import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.2.0/firebase-auth.js";
+        import { getFirestore, doc, setDoc, getDoc, updateDoc, increment } from "https://www.gstatic.com/firebasejs/11.2.0/firebase-firestore.js";
+        
         const firebaseConfig = {
-            apiKey: "your-api-key",
-            authDomain: "your-auth-domain",
-            projectId: "your-project-id",
-            storageBucket: "your-storage-bucket",
-            messagingSenderId: "your-messaging-sender-id",
-            appId: "your-app-id"
+            apiKey: "AIzaSyA2i7Fj...",
+            authDomain: "try-ok-def2b.firebaseapp.com",
+            projectId: "try-ok-def2b",
+            storageBucket: "try-ok-def2b.firebasestorage.app",
+            messagingSenderId: "970681789803",
+            appId: "1:970681789803:web:0ee725fa11eac40716702e"
         };
-
-        // Initialize Firebase
-        const app = firebase.initializeApp(firebaseConfig);
-        const auth = firebase.auth();
-        const db = firebase.firestore();
-
-        // Show/Hide Pages
-        function showPage(page) {
-            document.querySelectorAll('.page').forEach(p => p.classList.add('hidden'));
-            document.getElementById(page).classList.remove('hidden');
-        }
-
-        // Sign Up Logic
-        document.getElementById('signup-form').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const email = document.getElementById('signup-email').value;
-            const password = document.getElementById('signup-password').value;
+        
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        const provider = new GoogleAuthProvider();
+        
+        async function googleLogin() {
             try {
-                await auth.createUserWithEmailAndPassword(email, password);
-                alert('User signed up successfully!');
-                showPage('login');
+                const result = await signInWithPopup(auth, provider);
+                const user = result.user;
+                await setDoc(doc(db, "users", user.uid), { balance: 0 }, { merge: true });
+                alert("Login Successful");
             } catch (error) {
                 alert(error.message);
             }
-        });
-
-        // Login Logic
-        document.getElementById('login-form').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const email = document.getElementById('login-email').value;
-            const password = document.getElementById('login-password').value;
-            try {
-                await auth.signInWithEmailAndPassword(email, password);
-                showPage('dashboard');
-                loadUserData();
-            } catch (error) {
-                alert(error.message);
-            }
-        });
-
-        // Load User Data for Dashboard
-        function loadUserData() {
+        }
+        
+        async function deposit(amount) {
             const user = auth.currentUser;
             if (user) {
-                document.getElementById('user-name').innerText = user.email;
-                // Simulate earnings data from Firestore
-                document.getElementById('earnings').innerText = '100';
+                await updateDoc(doc(db, "users", user.uid), { balance: increment(amount) });
+                alert(`Deposited ${amount} PKR`);
             }
         }
-
-        // Update Profile Logic
-        document.getElementById('update-profile-form').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const name = document.getElementById('profile-name').value;
-            const email = document.getElementById('profile-email').value;
+        
+        async function withdraw(amount) {
             const user = auth.currentUser;
             if (user) {
-                await user.updateProfile({ displayName: name });
-                await user.updateEmail(email);
-                alert('Profile updated successfully!');
+                const userDoc = await getDoc(doc(db, "users", user.uid));
+                if (userDoc.exists() && userDoc.data().balance >= amount) {
+                    await updateDoc(doc(db, "users", user.uid), { balance: increment(-amount) });
+                    alert(`Withdrawal of ${amount} PKR successful`);
+                } else {
+                    alert("Insufficient Balance");
+                }
             }
-        });
-
-        // Handle Auth State
-        auth.onAuthStateChanged(user => {
+        }
+        
+        async function adViewEarn() {
+            const user = auth.currentUser;
             if (user) {
-                showPage('dashboard');
-                loadUserData();
+                await updateDoc(doc(db, "users", user.uid), { balance: increment(0.50) });
+                alert("Earned 0.50 PKR from Ad View");
+            }
+        }
+        
+        function logout() {
+            signOut(auth).then(() => {
+                alert("Logged Out Successfully");
+            });
+        }
+        
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                document.getElementById("user-status").innerText = `Logged in as ${user.displayName}`;
             } else {
-                showPage('login');
+                document.getElementById("user-status").innerText = "Not Logged In";
             }
         });
     </script>
+</head>
+<body>
+    <h1>Welcome to H11 Earns</h1>
+    <p id="user-status">Not Logged In</p>
+    <button onclick="googleLogin()">Login with Google</button>
+    <button onclick="logout()">Logout</button>
+    <button onclick="deposit(100)">Deposit 100 PKR</button>
+    <button onclick="withdraw(50)">Withdraw 50 PKR</button>
+    <button onclick="adViewEarn()">Watch Ad (Earn 0.50 PKR)</button>
 </body>
 </html>
